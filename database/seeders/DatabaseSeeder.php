@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,8 +20,8 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $studentRole = Role::firstOrCreate(['name' => 'guru']);
-        $pesertaRole = Role::firstOrCreate(['name' => 'siswa']);
+        $guruRole = Role::firstOrCreate(['name' => 'guru']);
+        $siswaRole = Role::firstOrCreate(['name' => 'siswa']);
 
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
@@ -30,5 +31,33 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $admin->assignRole($adminRole);
+
+        $guru = User::firstOrCreate(
+            ['email' => 'guru@example.com'],
+            [
+                'name' => 'Guru',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $guru->assignRole($guruRole);
+
+        $siswaUser = User::firstOrCreate(
+            ['email' => 'siswa@example.com'],
+            [
+                'name' => 'Siswa User',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $siswaUser->assignRole($siswaRole);
+
+        Student::firstOrCreate(
+            ['user_id' => $siswaUser->id],
+            [
+                'phone_number' => '081234567891',
+                'no_peserta' => 'STU123',
+                'major' => 'jepang',
+                'address' => 'address student'
+            ]
+        );
     }
 }

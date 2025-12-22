@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('students', function (Blueprint $table) {
+        Schema::create('question_options', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('no_peserta');
-            $table->string('major');
-            $table->string('phone_number');
-            $table->text('address');
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnUpdate();
+            $table->unsignedBigInteger('question_id');
+            $table->string('option_text');
+            $table->boolean('is_correct')->default(false);
+            $table->foreign('question_id')->references('id')->on('questions')->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('students');
+        Schema::dropIfExists('question_options');
     }
 };
