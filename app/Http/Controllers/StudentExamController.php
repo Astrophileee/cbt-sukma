@@ -9,6 +9,7 @@ use App\Models\AttemptAnswer;
 use App\Models\AttemptQuestion;
 use App\Models\QuestionOptions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -107,6 +108,14 @@ class StudentExamController extends Controller
             abort(403);
         }
 
+        if ($this->shouldAutoSubmit($attempt)) {
+            $this->finalizeAttempt($attempt, [], $attempt->ends_at);
+
+            return redirect()
+                ->route('exams.attempt.show', $attempt)
+                ->with('error', 'Waktu ujian sudah habis. Jawaban disubmit otomatis.');
+        }
+
         $attempt->load(['exam', 'attemptQuestions.question.options', 'answers']);
 
         return view('exams.take', compact('attempt'));
@@ -125,13 +134,31 @@ class StudentExamController extends Controller
             return redirect()->route('exams.attempt.show', $attempt)->withErrors(['error' => 'Ujian sudah disubmit.']);
         }
 
+        $submittedAt = $attempt->ends_at && $attempt->ends_at->isPast()
+            ? $attempt->ends_at
+            : now();
+
+        $this->finalizeAttempt($attempt, $request->input('answers', []), $submittedAt);
+
+        return redirect()->route('exams.attempt.show', $attempt)->with('success', 'Jawaban berhasil disubmit.');
+    }
+
+    private function shouldAutoSubmit(ExamAttempt $attempt): bool
+    {
+        return $attempt->status === 'in_progress'
+            && $attempt->ends_at
+            && $attempt->ends_at->isPast();
+    }
+
+    private function finalizeAttempt(ExamAttempt $attempt, array $answersInput, ?Carbon $submittedAt = null): void
+    {
         $attempt->load(['exam', 'attemptQuestions.question.options']);
-        $answersInput = $request->input('answers', []);
-        $maxPoints = $attempt->attemptQuestions->sum(function ($aq) {
-            return $aq->question->points ?? 0;
+
+        $maxPoints = $attempt->attemptQuestions->sum(function ($attemptQuestion) {
+            return $attemptQuestion->question->points ?? 0;
         });
 
-        DB::transaction(function () use ($attempt, $answersInput) {
+        DB::transaction(function () use ($attempt, $answersInput, $submittedAt) {
             $attempt->answers()->delete();
 
             $scoreRaw = 0;
@@ -176,7 +203,7 @@ class StudentExamController extends Controller
             }
 
             $attempt->update([
-                'submitted_at' => now(),
+                'submitted_at' => $submittedAt ?? now(),
                 'status' => 'submitted',
                 'score_raw' => $scoreRaw,
                 'score_final' => 0, // updated after transaction
@@ -184,10 +211,7 @@ class StudentExamController extends Controller
         });
 
         $attempt->refresh();
-        $scoreRaw = $attempt->score_raw;
-        $scoreFinal = $maxPoints > 0 ? round(($scoreRaw / $maxPoints) * 100, 2) : 0;
+        $scoreFinal = $maxPoints > 0 ? round(($attempt->score_raw / $maxPoints) * 100, 2) : 0;
         $attempt->update(['score_final' => $scoreFinal]);
-
-        return redirect()->route('exams.attempt.show', $attempt)->with('success', 'Jawaban berhasil disubmit.');
     }
 }

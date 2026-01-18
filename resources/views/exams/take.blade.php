@@ -12,6 +12,12 @@
             @if($attempt->ends_at)
                 <p class="text-sm text-gray-600">Batas: {{ $attempt->ends_at->format('d/m/Y H:i') }}</p>
             @endif
+            @if ($attempt->status === 'in_progress' && $attempt->ends_at)
+                @php
+                    $remainingSeconds = max(0, $attempt->ends_at->diffInSeconds(now(), false));
+                @endphp
+                <p class="text-sm text-gray-600">Sisa waktu: <span id="exam-timer" data-remaining-seconds="{{ $remainingSeconds }}">--:--</span></p>
+            @endif
         </div>
     </div>
 
@@ -20,7 +26,7 @@
             <div class="mb-4 text-sm text-green-700">Anda sudah mengirim jawaban. Skor sementara: {{ $attempt->score_final ?? $attempt->score_raw }}</div>
         @endif
 
-        <form action="{{ route('exams.attempt.submit', $attempt) }}" method="POST" class="space-y-6">
+        <form id="exam-attempt-form" action="{{ route('exams.attempt.submit', $attempt) }}" method="POST" class="space-y-6">
             @csrf
             @foreach ($attempt->attemptQuestions->sortBy('order_no') as $index => $attemptQuestion)
                 @php
@@ -63,7 +69,7 @@
 
             @if ($attempt->status === 'in_progress')
                 <div class="flex justify-end">
-                    <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Submit Jawaban</button>
+                    <button id="exam-submit-btn" type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Submit Jawaban</button>
                 </div>
             @endif
         </form>
@@ -74,5 +80,58 @@
             data-type="{{ session('success') ? 'success' : 'error' }}"
             data-message="{{ session('success') ?? session('error') }}">
         </div>
+    @endif
+
+    @if ($attempt->status === 'in_progress' && $attempt->ends_at)
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const timerEl = document.getElementById('exam-timer');
+                const form = document.getElementById('exam-attempt-form');
+
+                if (!timerEl || !form) {
+                    return;
+                }
+
+                let remainingSeconds = parseInt(timerEl.dataset.remainingSeconds, 10);
+                if (!Number.isFinite(remainingSeconds)) {
+                    return;
+                }
+
+                const submitButton = document.getElementById('exam-submit-btn');
+                const formatTime = (totalSeconds) => {
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    const pad = (value) => String(value).padStart(2, '0');
+
+                    if (hours > 0) {
+                        return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+                    }
+
+                    return `${pad(minutes)}:${pad(seconds)}`;
+                };
+
+                const tick = () => {
+                    if (remainingSeconds <= 0) {
+                        timerEl.textContent = '00:00';
+                        if (!form.dataset.autoSubmitted) {
+                            form.dataset.autoSubmitted = '1';
+                            if (submitButton) {
+                                submitButton.disabled = true;
+                                submitButton.textContent = 'Mengirim...';
+                            }
+                            form.submit();
+                        }
+                        return;
+                    }
+
+                    timerEl.textContent = formatTime(remainingSeconds);
+                    remainingSeconds -= 1;
+                };
+
+                tick();
+                setInterval(tick, 1000);
+            });
+        </script>
     @endif
 @endsection
