@@ -21,7 +21,12 @@ class ExamController extends Controller
      */
     public function index()
     {
-        $exams = Exam::with(['questions.options'])->latest()->get();
+        $exams = Exam::with([
+            'questions.options',
+            'attempts' => function ($query) {
+                $query->with('user')->latest('started_at');
+            },
+        ])->latest()->get();
         $questions = Question::where('is_published', true)->with('options')->get();
         $majors = $this->majors;
 

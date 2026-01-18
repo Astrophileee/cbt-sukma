@@ -60,13 +60,47 @@ $(document).ready(function () {
             search: "",
         },
     });
-    $("#examsTable").DataTable({
-        responsive: true,
-        pageLength: 10,
-        lengthChange: false,
-        language: {
-            searchPlaceholder: "Cari...",
-            search: "",
-        },
-    });
+
+    const examsTableEl = $("#examsTable");
+    if (examsTableEl.length) {
+        const examsTable = examsTableEl.DataTable({
+            responsive: true,
+            pageLength: 10,
+            lengthChange: false,
+            language: {
+                searchPlaceholder: "Cari...",
+                search: "",
+            },
+        });
+
+        examsTableEl.on("click", ".js-exam-detail-toggle", function () {
+            const button = $(this);
+            const examId = button.data("examId");
+            if (!examId) {
+                return;
+            }
+
+            const template = document.getElementById(
+                `exam-detail-template-${examId}`
+            );
+            if (!template) {
+                return;
+            }
+
+            const tr = button.closest("tr");
+            const row = examsTable.row(tr);
+            const isOpen = row.child.isShown();
+
+            if (isOpen) {
+                row.child.hide();
+                tr.removeClass("shown");
+                button.text("Detail").attr("aria-expanded", "false");
+                return;
+            }
+
+            row.child(template.innerHTML).show();
+            tr.addClass("shown");
+            button.text("Tutup").attr("aria-expanded", "true");
+        });
+    }
 });

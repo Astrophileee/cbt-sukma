@@ -14,7 +14,7 @@
             @endif
             @if ($attempt->status === 'in_progress' && $attempt->ends_at)
                 @php
-                    $remainingSeconds = max(0, $attempt->ends_at->diffInSeconds(now(), false));
+                    $remainingSeconds = max(0, now()->diffInSeconds($attempt->ends_at, false));
                 @endphp
                 <p class="text-sm text-gray-600">Sisa waktu: <span id="exam-timer" data-remaining-seconds="{{ $remainingSeconds }}">--:--</span></p>
             @endif

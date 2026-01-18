@@ -57,6 +57,15 @@ class StudentExamController extends Controller
             return back()->withErrors(['access_code' => 'Soal pada ujian ini belum lengkap.'])->withInput();
         }
 
+        $now = now();
+        if ($exam->start_at && $now->lt($exam->start_at)) {
+            return back()->withErrors(['access_code' => 'Ujian belum dimulai. Silakan coba lagi saat waktu ujian dimulai.'])->withInput();
+        }
+
+        if ($exam->end_at && $now->gt($exam->end_at)) {
+            return back()->withErrors(['access_code' => 'Ujian sudah berakhir.'])->withInput();
+        }
+
         $userId = Auth::id();
 
         // Jika sudah pernah submit, tidak boleh ulang
@@ -74,12 +83,17 @@ class StudentExamController extends Controller
             ->first();
 
         if (!$attempt) {
-            $attempt = DB::transaction(function () use ($exam, $userId) {
+            $endsAt = $now->copy()->addMinutes($exam->duration_minutes);
+            if ($exam->end_at && $exam->end_at->lt($endsAt)) {
+                $endsAt = $exam->end_at;
+            }
+
+            $attempt = DB::transaction(function () use ($exam, $userId, $now, $endsAt) {
                 $attempt = ExamAttempt::create([
                     'exam_id' => $exam->id,
                     'user_id' => $userId,
-                    'started_at' => now(),
-                    'ends_at' => now()->addMinutes($exam->duration_minutes),
+                    'started_at' => $now,
+                    'ends_at' => $endsAt,
                     'status' => 'in_progress',
                 ]);
 
@@ -108,15 +122,16 @@ class StudentExamController extends Controller
             abort(403);
         }
 
+        $attempt->loadMissing('exam');
         if ($this->shouldAutoSubmit($attempt)) {
-            $this->finalizeAttempt($attempt, [], $attempt->ends_at);
+            $this->finalizeAttempt($attempt, [], $this->resolveAutoSubmittedAt($attempt));
 
             return redirect()
                 ->route('exams.attempt.show', $attempt)
                 ->with('error', 'Waktu ujian sudah habis. Jawaban disubmit otomatis.');
         }
 
-        $attempt->load(['exam', 'attemptQuestions.question.options', 'answers']);
+        $attempt->load(['attemptQuestions.question.options', 'answers']);
 
         return view('exams.take', compact('attempt'));
     }
@@ -145,20 +160,43 @@ class StudentExamController extends Controller
 
     private function shouldAutoSubmit(ExamAttempt $attempt): bool
     {
-        return $attempt->status === 'in_progress'
-            && $attempt->ends_at
-            && $attempt->ends_at->isPast();
+        if ($attempt->status !== 'in_progress') {
+            return false;
+        }
+
+        $attemptEnded = $attempt->ends_at && $attempt->ends_at->isPast();
+        $examEnded = $attempt->exam?->end_at && $attempt->exam->end_at->isPast();
+
+        return $attemptEnded || $examEnded;
+    }
+
+    private function resolveAutoSubmittedAt(ExamAttempt $attempt): Carbon
+    {
+        $submittedAt = $attempt->ends_at;
+        $examEndAt = $attempt->exam?->end_at;
+
+        if ($examEndAt && (!$submittedAt || $examEndAt->lt($submittedAt))) {
+            $submittedAt = $examEndAt;
+        }
+
+        return $submittedAt ?? now();
     }
 
     private function finalizeAttempt(ExamAttempt $attempt, array $answersInput, ?Carbon $submittedAt = null): void
     {
         $attempt->load(['exam', 'attemptQuestions.question.options']);
 
+        $hasEssay = $attempt->attemptQuestions->contains(function ($attemptQuestion) {
+            $type = $attemptQuestion->question->type ?? '';
+            return strtolower($type) === 'essay';
+        });
+        $status = $hasEssay ? 'submitted' : 'graded';
+
         $maxPoints = $attempt->attemptQuestions->sum(function ($attemptQuestion) {
             return $attemptQuestion->question->points ?? 0;
         });
 
-        DB::transaction(function () use ($attempt, $answersInput, $submittedAt) {
+        DB::transaction(function () use ($attempt, $answersInput, $submittedAt, $status) {
             $attempt->answers()->delete();
 
             $scoreRaw = 0;
@@ -204,7 +242,7 @@ class StudentExamController extends Controller
 
             $attempt->update([
                 'submitted_at' => $submittedAt ?? now(),
-                'status' => 'submitted',
+                'status' => $status,
                 'score_raw' => $scoreRaw,
                 'score_final' => 0, // updated after transaction
             ]);

@@ -14,6 +14,9 @@ class ExamGradingController extends Controller
     {
         $attempts = ExamAttempt::with(['exam', 'user'])
             ->whereIn('status', ['submitted', 'graded'])
+            ->whereHas('attemptQuestions.question', function ($query) {
+                $query->where('type', 'essay');
+            })
             ->latest()
             ->get();
 
