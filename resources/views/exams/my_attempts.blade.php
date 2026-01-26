@@ -2,6 +2,31 @@
 
 @section('content')
     <h1 class="text-xl font-bold mb-4">Nilai Saya</h1>
+
+    <div class="bg-white shadow rounded-lg p-4 mb-4">
+        <form action="{{ route('exams.attempts.report') }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Dari tanggal</label>
+                <input type="date" name="start_date" value="{{ old('start_date') }}" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                @error('start_date')
+                    <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sampai tanggal</label>
+                <input type="date" name="end_date" value="{{ old('end_date') }}" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                @error('end_date')
+                    <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800">Generate PDF</button>
+                <span class="text-xs text-gray-500">Kosongkan tanggal untuk semua attempt.</span>
+            </div>
+        </form>
+    </div>
+
     <div class="bg-white shadow rounded-lg overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">

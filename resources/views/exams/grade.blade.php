@@ -27,6 +27,9 @@
                         <div>
                             <div class="text-sm text-gray-500">Soal {{ $index + 1 }} • {{ strtoupper($question->type) }} • Poin {{ $question->points }}</div>
                             <p class="text-gray-800 font-medium mt-1">{{ $question->question_text }}</p>
+                            @if ($question->question_image)
+                                <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" class="mt-2 max-h-52 rounded border object-contain">
+                            @endif
                         </div>
                         @if($question->type === 'MCQ')
                             <span class="text-sm {{ $answer->is_correct ? 'text-green-700 font-semibold' : 'text-red-600' }}">
@@ -36,11 +39,17 @@
                     </div>
 
                     @if ($question->type === 'MCQ')
-                        <div class="mt-2 text-sm text-gray-700">
-                            Jawaban dipilih:
-                            <span class="font-semibold">
-                                {{ optional($question->options->firstWhere('id', $answer->selected_option_id))->option_text ?? '-' }}
-                            </span>
+                        @php $selectedOption = $question->options->firstWhere('id', $answer->selected_option_id); @endphp
+                        <div class="mt-2 text-sm text-gray-700 space-y-1">
+                            <div>
+                                Jawaban dipilih:
+                                <span class="font-semibold">
+                                    {{ optional($selectedOption)->option_text ?? '-' }}
+                                </span>
+                            </div>
+                            @if ($selectedOption && $selectedOption->option_image)
+                                <img src="{{ Storage::url($selectedOption->option_image) }}" alt="Gambar opsi dipilih" class="h-28 rounded border object-contain">
+                            @endif
                         </div>
                     @else
                         <div class="mt-3">

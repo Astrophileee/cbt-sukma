@@ -13,9 +13,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -54,6 +54,7 @@ Route::prefix('exams')->name('exams.')->group(function () {
     Route::post('/join', [StudentExamController::class, 'start'])->name('join');
 
     Route::get('/my/attempts', [StudentExamController::class, 'myAttempts'])->name('attempts.mine');
+    Route::post('/my/attempts/report', [StudentExamController::class, 'downloadReport'])->name('attempts.report');
     Route::get('/attempts/{attempt}', [StudentExamController::class, 'showAttempt'])->name('attempt.show');
     Route::post('/attempts/{attempt}/submit', [StudentExamController::class, 'submitAttempt'])->name('attempt.submit');
 

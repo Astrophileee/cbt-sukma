@@ -211,6 +211,9 @@
                                         {{ in_array($question->id, old('question_ids', [])) ? 'checked' : '' }}>
                                     <div>
                                         <div class="text-sm font-semibold text-gray-800">{{ \Illuminate\Support\Str::limit($question->question_text, 120) }}</div>
+                                        @if ($question->question_image)
+                                            <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" class="h-16 mt-1 rounded border object-contain">
+                                        @endif
                                         <div class="text-xs text-gray-500">{{ $question->jurusan }} • {{ strtoupper($question->type) }} • Poin {{ $question->points }}</div>
                                     </div>
                                 </label>
@@ -331,6 +334,9 @@
                                         <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-1">
                                         <div>
                                             <div class="text-sm font-semibold text-gray-800">{{ \Illuminate\Support\Str::limit($question->question_text, 120) }}</div>
+                                        @if ($question->question_image)
+                                            <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" class="h-16 mt-1 rounded border object-contain">
+                                        @endif
                                             <div class="text-xs text-gray-500">{{ $question->jurusan }} • {{ strtoupper($question->type) }} • Poin {{ $question->points }}</div>
                                         </div>
                                     </label>

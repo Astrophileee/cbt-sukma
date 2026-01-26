@@ -20,6 +20,7 @@ return new class extends Migration
                 $table->unsignedInteger('points')->default(1);
                 $table->string('difficulty')->nullable();
                 $table->boolean('is_published')->default(false);
+                $table->string('question_image')->nullable();
                 $table->foreign('created_by')->references('id')->on('users')->cascadeOnUpdate();
                 $table->timestamps();
         });

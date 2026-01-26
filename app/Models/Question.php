@@ -11,6 +11,7 @@ class Question extends Model
         'jurusan',
         'type',
         'question_text',
+        'question_image',
         'points',
         'difficulty',
         'is_published',

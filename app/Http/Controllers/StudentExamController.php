@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StudentExamController extends Controller
 {
@@ -34,6 +35,39 @@ class StudentExamController extends Controller
             ->get();
 
         return view('exams.my_attempts', compact('attempts'));
+    }
+
+    /**
+     * Unduh laporan PDF nilai attempt milik user.
+     */
+    public function downloadReport(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $startDate = !empty($validated['start_date']) ? Carbon::parse($validated['start_date'])->startOfDay() : null;
+        $endDate = !empty($validated['end_date']) ? Carbon::parse($validated['end_date'])->endOfDay() : null;
+
+        $attempts = ExamAttempt::with('exam')
+            ->where('user_id', Auth::id())
+            ->whereNotNull('submitted_at')
+            ->when($startDate, fn($query) => $query->where('submitted_at', '>=', $startDate))
+            ->when($endDate, fn($query) => $query->where('submitted_at', '<=', $endDate))
+            ->orderByDesc('submitted_at')
+            ->get();
+
+        $pdf = Pdf::loadView('exams.my_attempts_report', [
+            'attempts' => $attempts,
+            'user' => $request->user(),
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+
+        $fileName = 'laporan-nilai-' . now()->format('YmdHis') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
     /**

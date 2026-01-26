@@ -38,6 +38,9 @@
                         <div>
                             <div class="text-sm text-gray-500">Soal {{ $index + 1 }} • {{ strtoupper($question->type) }} • Poin {{ $question->points }}</div>
                             <p class="text-gray-800 font-medium mt-1">{{ $question->question_text }}</p>
+                            @if ($question->question_image)
+                                <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" class="mt-2 max-h-52 rounded border object-contain">
+                            @endif
                         </div>
                     </div>
 
@@ -51,7 +54,12 @@
                                         class="mt-1"
                                         @if(optional($existingAnswer)->selected_option_id === $option->id) checked @endif
                                         @if($attempt->status !== 'in_progress') disabled @endif>
-                                    <span class="text-gray-700 text-sm">{{ $option->option_text }}</span>
+                                    <div class="text-gray-700 text-sm space-y-1">
+                                        <div>{{ $option->option_text }}</div>
+                                        @if ($option->option_image)
+                                            <img src="{{ Storage::url($option->option_image) }}" alt="Gambar opsi" class="h-28 rounded border object-contain">
+                                        @endif
+                                    </div>
                                 </label>
                             @endforeach
                         </div>

@@ -16,6 +16,32 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <!-- Major -->
+        <div class="mt-4">
+            <x-input-label for="major" :value="__('Jurusan')" />
+            <select id="major" name="major" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                <option value="" disabled {{ old('major') ? '' : 'selected' }}>Pilih jurusan</option>
+                @foreach(($majors ?? []) as $major)
+                    <option value="{{ $major }}" {{ old('major') === $major ? 'selected' : '' }}>{{ $major }}</option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('major')" class="mt-2" />
+        </div>
+
+        <!-- Phone -->
+        <div class="mt-4">
+            <x-input-label for="phone_number" :value="__('Nomor HP')" />
+            <x-text-input id="phone_number" class="block mt-1 w-full" type="text" name="phone_number" :value="old('phone_number')" required autocomplete="tel" />
+            <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
+        </div>
+
+        <!-- Address -->
+        <div class="mt-4">
+            <x-input-label for="address" :value="__('Alamat')" />
+            <textarea id="address" name="address" rows="3" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>{{ old('address') }}</textarea>
+            <x-input-error :messages="$errors->get('address')" class="mt-2" />
+        </div>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />

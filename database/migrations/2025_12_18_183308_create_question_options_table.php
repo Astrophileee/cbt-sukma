@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('question_id');
             $table->string('option_text');
             $table->boolean('is_correct')->default(false);
+            $table->string('option_image')->nullable();
             $table->foreign('question_id')->references('id')->on('questions')->cascadeOnDelete();
             $table->timestamps();
         });

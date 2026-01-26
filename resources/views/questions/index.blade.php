@@ -28,12 +28,24 @@
                         <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $loop->iteration }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $question->jurusan }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ strtoupper($question->type) }}</td>
-                        <td class="px-6 py-4 text-gray-700">{{ \Illuminate\Support\Str::limit($question->question_text, 80) }}</td>
+                        <td class="px-6 py-4 text-gray-700">
+                            <div class="space-y-2">
+                                <div>{{ \Illuminate\Support\Str::limit($question->question_text, 80) }}</div>
+                                @if ($question->question_image)
+                                    <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal {{ $question->id }}" class="h-16 rounded border object-contain">
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-6 py-4 text-gray-700">
                             @if ($question->type === 'MCQ')
-                            <ul class="list-disc list-inside text-sm space-y-1">
+                            <ul class="list-disc list-inside text-sm space-y-2">
                                 @foreach ($question->options as $option)
-                                <li class="{{ $option->is_correct ? 'font-semibold text-green-700' : '' }}">{{ $option->option_text }}</li>
+                                <li class="{{ $option->is_correct ? 'font-semibold text-green-700' : '' }}">
+                                    <div>{{ $option->option_text }}</div>
+                                    @if ($option->option_image)
+                                        <img src="{{ Storage::url($option->option_image) }}" alt="Gambar opsi" class="h-12 mt-1 rounded border object-contain">
+                                    @endif
+                                </li>
                                 @endforeach
                             </ul>
                             @else
@@ -82,7 +94,7 @@
 
                 <h2 class="text-lg font-semibold mb-4">Tambah Soal</h2>
 
-                <form action="{{ route('questions.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('questions.store') }}" method="POST" class="space-y-4" enctype="multipart/form-data">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -102,7 +114,7 @@
                             <select name="type" id="addType" required class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 text-sm bg-white" onchange="toggleOptionsBlock('add', this.value)">
                                 <option value="" disabled {{ old('type') ? '' : 'selected' }}>Pilih tipe</option>
                                 <option value="MCQ" {{ old('type') === 'MCQ' ? 'selected' : '' }}>MCQ</option>
-                                <option value="essay" {{ old('type') === 'essay' ? 'selected' : '' }}>Essay</option>
+                                {{-- <option value="essay" {{ old('type') === 'essay' ? 'selected' : '' }}>Essay</option> --}}
                             </select>
                             @error('type')
                                 <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
@@ -114,6 +126,15 @@
                         <label class="block text-sm font-medium text-gray-700">Soal *</label>
                         <textarea name="question_text" rows="3" required class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 text-sm">{{ old('question_text') }}</textarea>
                         @error('question_text')
+                            <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Foto Soal (opsional)</label>
+                        <input type="file" name="question_image" accept="image/*" class="mt-1 text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Akan ditampilkan di soal jika diisi.</p>
+                        @error('question_image')
                             <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                         @enderror
                     </div>
@@ -149,11 +170,17 @@
                             <p class="text-sm font-semibold text-gray-700">Opsi (pilih jawaban benar)</p>
                             <span class="text-xs text-gray-500">Minimal 2, maksimal 4</span>
                         </div>
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             @for ($i = 0; $i < 4; $i++)
-                                <div class="flex items-center space-x-3">
-                                    <input type="radio" name="correct_option" value="{{ $i }}" {{ old('correct_option') == $i ? 'checked' : '' }}>
-                                    <input type="text" name="options[{{ $i }}]" value="{{ old('options.' . $i) }}" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Opsi {{ $i + 1 }}">
+                                <div class="flex items-start space-x-3">
+                                    <input type="radio" name="correct_option" value="{{ $i }}" class="mt-2" {{ old('correct_option') == $i ? 'checked' : '' }}>
+                                    <div class="flex-1 space-y-2">
+                                        <input type="text" name="options[{{ $i }}]" value="{{ old('options.' . $i) }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Opsi {{ $i + 1 }}">
+                                        <div class="flex items-center gap-2">
+                                            <input type="file" name="option_images[{{ $i }}]" accept="image/*" class="text-xs">
+                                            <span class="text-xs text-gray-500">Foto opsi (opsional)</span>
+                                        </div>
+                                    </div>
                                 </div>
                             @endfor
                         </div>
@@ -161,6 +188,9 @@
                             <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                         @enderror
                         @error('correct_option')
+                            <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
+                        @enderror
+                        @error('option_images.*')
                             <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                         @enderror
                     </div>
@@ -181,7 +211,7 @@
                 <button onclick="document.getElementById('modal-edit-question').classList.add('hidden')" class="absolute top-4 right-4 text-xl font-bold text-gray-600 hover:text-gray-800">&times;</button>
                 <h2 class="text-lg font-semibold mb-4">Edit Soal</h2>
 
-                <form id="editQuestionForm" method="POST" action="{{ route('questions.update', ['question' => '__ID__']) }}">
+                <form id="editQuestionForm" method="POST" action="{{ route('questions.update', ['question' => '__ID__']) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PATCH')
                     <div class="space-y-4">
@@ -203,7 +233,7 @@
                                 <select name="type" id="editType" required class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 text-sm bg-white" onchange="toggleOptionsBlock('edit', this.value)">
                                     <option value="" disabled selected>Pilih tipe</option>
                                     <option value="MCQ">MCQ</option>
-                                    <option value="essay">Essay</option>
+                                    {{-- <option value="essay">Essay</option> --}}
                                 </select>
                                 @error('type')
                                     <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
@@ -215,6 +245,21 @@
                             <label class="block text-sm font-medium text-gray-700">Soal *</label>
                             <textarea name="question_text" id="editQuestionText" rows="3" required class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 text-sm">{{ old('question_text') }}</textarea>
                             @error('question_text')
+                                <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Foto Soal (opsional)</label>
+                            <div class="space-y-2 mt-1">
+                                <input type="file" name="question_image" id="editQuestionImage" accept="image/*" class="text-sm">
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" name="remove_question_image" id="editQuestionImageRemove" value="1">
+                                    <span>Hapus foto saat ini</span>
+                                </label>
+                                <img id="editQuestionImagePreview" src="" alt="Gambar soal" class="h-24 rounded border object-contain hidden">
+                            </div>
+                            @error('question_image')
                                 <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                             @enderror
                         </div>
@@ -250,11 +295,22 @@
                                 <p class="text-sm font-semibold text-gray-700">Opsi (pilih jawaban benar)</p>
                                 <span class="text-xs text-gray-500">Minimal 2, maksimal 4</span>
                             </div>
-                            <div class="space-y-2">
+                            <div class="space-y-3">
                                 @for ($i = 0; $i < 4; $i++)
-                                    <div class="flex items-center space-x-3">
-                                        <input type="radio" name="correct_option" id="editCorrect{{ $i }}" value="{{ $i }}">
-                                        <input type="text" name="options[{{ $i }}]" id="editOption{{ $i }}" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Opsi {{ $i + 1 }}">
+                                    <div class="flex items-start space-x-3">
+                                        <input type="radio" name="correct_option" id="editCorrect{{ $i }}" value="{{ $i }}" class="mt-2">
+                                        <div class="flex-1 space-y-2">
+                                            <input type="hidden" name="option_ids[{{ $i }}]" id="editOptionId{{ $i }}">
+                                            <input type="text" name="options[{{ $i }}]" id="editOption{{ $i }}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Opsi {{ $i + 1 }}">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <input type="file" name="option_images[{{ $i }}]" id="editOptionImage{{ $i }}" accept="image/*" class="text-xs">
+                                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                    <input type="checkbox" name="remove_option_images[{{ $i }}]" id="editRemoveOptionImage{{ $i }}" value="1">
+                                                    <span>Hapus foto opsi</span>
+                                                </label>
+                                            </div>
+                                            <img id="editOptionPreview{{ $i }}" src="" alt="Gambar opsi {{ $i + 1 }}" class="h-20 rounded border object-contain hidden">
+                                        </div>
                                     </div>
                                 @endfor
                             </div>
@@ -262,6 +318,9 @@
                                 <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                             @enderror
                             @error('correct_option')
+                                <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
+                            @enderror
+                            @error('option_images.*')
                                 <div class="text-red-500 text-xs mt-2">{{ $message }}</div>
                             @enderror
                         </div>
@@ -278,6 +337,8 @@
 
     @vite(['resources/js/app.js'])
     <script>
+        const storageBaseUrl = @json(rtrim(Storage::url(''), '/'));
+
         function toggleOptionsBlock(prefix, type) {
             const block = document.getElementById(`${prefix}OptionsBlock`);
             if (type === 'MCQ') {
@@ -295,6 +356,19 @@
         function updatePoints(prefix, difficulty) {
             const input = document.getElementById(`${prefix}Points`);
             input.value = getPointsFromDifficulty(difficulty);
+        }
+
+        function buildStorageUrl(path = '') {
+            if (!path) return '';
+            return `${storageBaseUrl}/${path.replace(/^\/+/, '')}`;
+        }
+
+        function setImagePreview(elementId, path) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const url = buildStorageUrl(path);
+            el.src = url;
+            el.classList.toggle('hidden', !url);
         }
 
         function openEditModal(question, overrides = {}) {
@@ -315,6 +389,16 @@
             updatePoints('edit', document.getElementById('editDifficulty').value);
             document.getElementById('editPublished').checked = Boolean(overrides.is_published ?? question.is_published);
 
+            setImagePreview('editQuestionImagePreview', overrides.question_image ?? question.question_image ?? '');
+            const removeQuestionImage = document.getElementById('editQuestionImageRemove');
+            if (removeQuestionImage) {
+                removeQuestionImage.checked = Boolean(overrides.remove_question_image);
+            }
+            const questionImageInput = document.getElementById('editQuestionImage');
+            if (questionImageInput) {
+                questionImageInput.value = '';
+            }
+
             for (let i = 0; i < 4; i++) {
                 const optionValue = overrides.options?.[i] ?? (question.options?.[i]?.option_text ?? '');
                 document.getElementById(`editOption${i}`).value = optionValue;
@@ -323,6 +407,21 @@
                     ? Number(overrides.correct_option) === i
                     : (question.options?.[i]?.is_correct ?? false);
                 radio.checked = isCorrect;
+
+                const optionIdInput = document.getElementById(`editOptionId${i}`);
+                if (optionIdInput) {
+                    optionIdInput.value = overrides.option_ids?.[i] ?? (question.options?.[i]?.id ?? '');
+                }
+
+                setImagePreview(`editOptionPreview${i}`, question.options?.[i]?.option_image ?? '');
+                const removeOptionCheckbox = document.getElementById(`editRemoveOptionImage${i}`);
+                if (removeOptionCheckbox) {
+                    removeOptionCheckbox.checked = Boolean(overrides.remove_option_images?.[i]);
+                }
+                const optionImageInput = document.getElementById(`editOptionImage${i}`);
+                if (optionImageInput) {
+                    optionImageInput.value = '';
+                }
             }
         }
 
@@ -395,6 +494,9 @@
                     is_published: @json(old('is_published')),
                     options: @json(old('options')),
                     correct_option: @json(old('correct_option')),
+                    option_ids: @json(old('option_ids')),
+                    remove_question_image: @json(old('remove_question_image')),
+                    remove_option_images: @json(old('remove_option_images')),
                 });
             }
         @endif
