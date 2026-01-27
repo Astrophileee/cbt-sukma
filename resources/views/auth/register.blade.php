@@ -19,7 +19,7 @@
         <!-- Major -->
         <div class="mt-4">
             <x-input-label for="major" :value="__('Jurusan')" />
-            <select id="major" name="major" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+            <select id="major" name="major" class="block mt-1 w-full border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm" required>
                 <option value="" disabled {{ old('major') ? '' : 'selected' }}>Pilih jurusan</option>
                 @foreach(($majors ?? []) as $major)
                     <option value="{{ $major }}" {{ old('major') === $major ? 'selected' : '' }}>{{ $major }}</option>
@@ -38,7 +38,7 @@
         <!-- Address -->
         <div class="mt-4">
             <x-input-label for="address" :value="__('Alamat')" />
-            <textarea id="address" name="address" rows="3" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>{{ old('address') }}</textarea>
+            <textarea id="address" name="address" rows="3" class="block mt-1 w-full border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm" required>{{ old('address') }}</textarea>
             <x-input-error :messages="$errors->get('address')" class="mt-2" />
         </div>
 
@@ -66,7 +66,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
+            <a class="underline text-sm text-gray-600 hover:text-yellow-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 

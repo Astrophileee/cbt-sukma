@@ -1,4 +1,4 @@
-<header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+<header class="bg-white border-b border-yellow-100 px-6 py-4 flex justify-between items-center">
     <button onclick="toggleSidebar()" class="p-2 text-gray-700 lg:hidden">
         <i class="fas fa-bars text-xl"></i>
     </button>
@@ -7,8 +7,8 @@
 
     {{-- Foto profil dan dropdown --}}
     <div class="relative">
-        <button onclick="toggleDropdown()" class="focus:outline-none">
-            <p>{{ Auth::user()->name }}</p>
+        <button onclick="toggleDropdown()" class="px-3 py-1.5 rounded-full bg-yellow-50 text-gray-700 hover:bg-yellow-100 transition focus:outline-none">
+            <p class="text-sm font-medium">{{ Auth::user()->name }}</p>
         </button>
 
         {{-- Dropdown --}}
@@ -22,7 +22,7 @@
 
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50">
                     <i class="fas fa-sign-out-alt text-sm"></i> Log out
                 </button>
             </form>

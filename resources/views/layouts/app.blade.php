@@ -18,7 +18,7 @@
         </style>
 
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-gradient-to-br from-yellow-50 via-white to-yellow-100 text-gray-900">
 
     <div class="flex min-h-screen">
         @include('layouts.partials.sidebar')

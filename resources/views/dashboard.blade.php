@@ -20,7 +20,7 @@
                         ];
                     @endphp
                     @foreach($adminCards as $card)
-                        <div class="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+                        <div class="bg-white/90 rounded-lg border border-yellow-100/80 shadow-sm hover:shadow-md transition p-4 flex items-center gap-3">
                             @include('partials.dashboard-icon', ['type' => $card['icon']])
                             <div>
                                 <div class="text-2xl font-bold">{{ $card['value'] }}</div>
@@ -44,7 +44,7 @@
                         ];
                     @endphp
                     @foreach($teacherCards as $card)
-                        <div class="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+                        <div class="bg-white/90 rounded-lg border border-yellow-100/80 shadow-sm hover:shadow-md transition p-4 flex items-center gap-3">
                             @include('partials.dashboard-icon', ['type' => $card['icon']])
                             <div>
                                 <div class="text-2xl font-bold">{{ $card['value'] }}</div>
@@ -67,7 +67,7 @@
                         ];
                     @endphp
                     @foreach($studentCards as $card)
-                        <div class="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+                        <div class="bg-white/90 rounded-lg border border-yellow-100/80 shadow-sm hover:shadow-md transition p-4 flex items-center gap-3">
                             @include('partials.dashboard-icon', ['type' => $card['icon']])
                             <div>
                                 <div class="text-2xl font-bold">{{ $card['value'] }}</div>
@@ -78,14 +78,14 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-1">
-                    <div class="bg-white rounded-lg shadow p-5">
+                    <div class="bg-white/90 rounded-lg border border-yellow-100/80 shadow-sm p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div class="font-semibold text-gray-800">Jadwal Ujian (Mendatang)</div>
                             @include('partials.dashboard-icon', ['type' => 'calendar'])
                         </div>
                         <div class="space-y-3">
                             @forelse($upcomingExams as $exam)
-                                <div class="border border-gray-200 rounded-md p-3 flex items-start justify-between">
+                                <div class="border border-yellow-100 rounded-md p-3 flex items-start justify-between">
                                     <div>
                                         <div class="font-semibold text-gray-800">{{ $exam->title }}</div>
                                         <div class="text-xs text-gray-600">{{ $exam->jurusan }} • {{ $exam->selection_mode }} • {{ $exam->total_questions }} soal</div>
