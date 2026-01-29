@@ -26,20 +26,44 @@
             <div class="mb-4 text-sm text-green-700">Anda sudah mengirim jawaban. Skor sementara: {{ $attempt->score_final ?? $attempt->score_raw }}</div>
         @endif
 
+        @php
+            $sortedQuestions = $attempt->attemptQuestions->sortBy('order_no');
+            $totalQuestions = $sortedQuestions->count();
+        @endphp
         <form id="exam-attempt-form" action="{{ route('exams.attempt.submit', $attempt) }}" method="POST" class="space-y-6">
             @csrf
-            @foreach ($attempt->attemptQuestions->sortBy('order_no') as $index => $attemptQuestion)
+            <div class="border border-yellow-100 rounded-lg p-4 bg-yellow-50/40">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="text-sm text-gray-700">
+                        Soal <span id="current-question-index" class="font-semibold text-gray-900">1</span> dari {{ $totalQuestions }}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="question-prev" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 text-gray-600 hover:bg-white transition">Sebelumnya</button>
+                        <button id="question-next" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-yellow-500 text-gray-900 hover:bg-yellow-600 transition">Berikutnya</button>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
+                    @foreach ($sortedQuestions as $index => $attemptQuestion)
+                        <button type="button"
+                            class="question-number-btn h-9 rounded-md border border-gray-200 text-sm font-semibold text-gray-600 hover:border-yellow-400 hover:text-yellow-700 transition"
+                            data-question-nav="{{ $index }}">
+                            {{ $index + 1 }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+            @foreach ($sortedQuestions as $index => $attemptQuestion)
                 @php
                     $question = $attemptQuestion->question;
                     $existingAnswer = $attempt->answers->firstWhere('question_id', $question->id);
                 @endphp
-                <div class="border border-gray-200 rounded-md p-4">
+                <section class="question-section border border-gray-200 rounded-md p-4 {{ $index === 0 ? '' : 'hidden' }}" data-question-index="{{ $index }}">
                     <div class="flex items-start justify-between">
                         <div>
                             <div class="text-sm text-gray-500">Soal {{ $index + 1 }} • {{ strtoupper($question->type) }} • Poin {{ $question->points }}</div>
                             <p class="text-gray-800 font-medium mt-1">{{ $question->question_text }}</p>
                             @if ($question->question_image)
-                                <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" class="mt-2 max-h-52 rounded border object-contain">
+                                <img src="{{ Storage::url($question->question_image) }}" alt="Gambar soal" data-full-url="{{ Storage::url($question->question_image) }}" class="exam-image mt-2 max-h-52 rounded border object-contain cursor-zoom-in">
                             @endif
                         </div>
                     </div>
@@ -57,7 +81,7 @@
                                     <div class="text-gray-700 text-sm space-y-1">
                                         <div>{{ $option->option_text }}</div>
                                         @if ($option->option_image)
-                                            <img src="{{ Storage::url($option->option_image) }}" alt="Gambar opsi" class="h-28 rounded border object-contain">
+                                            <img src="{{ Storage::url($option->option_image) }}" alt="Gambar opsi" data-full-url="{{ Storage::url($option->option_image) }}" class="exam-image h-28 rounded border object-contain cursor-zoom-in">
                                         @endif
                                     </div>
                                 </label>
@@ -72,7 +96,7 @@
                                 @if($attempt->status !== 'in_progress') readonly @endif>{{ old('answers.' . $question->id . '.answer_text', optional($existingAnswer)->answer_text) }}</textarea>
                         </div>
                     @endif
-                </div>
+                </section>
             @endforeach
 
             @if ($attempt->status === 'in_progress')
@@ -81,6 +105,15 @@
                 </div>
             @endif
         </form>
+    </div>
+
+    <div id="image-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+        <div class="relative max-w-5xl w-full">
+            <button id="image-modal-close" type="button" class="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white text-gray-700 shadow hover:bg-gray-100">✕</button>
+            <div class="bg-white rounded-lg p-3">
+                <img id="image-modal-img" src="" alt="Preview gambar" class="max-h-[80vh] w-full object-contain rounded">
+            </div>
+        </div>
     </div>
 
     @if (session('success') || session('error'))
@@ -142,4 +175,115 @@
             });
         </script>
     @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sections = Array.from(document.querySelectorAll('.question-section'));
+            if (!sections.length) {
+                return;
+            }
+
+            const currentLabel = document.getElementById('current-question-index');
+            const navButtons = Array.from(document.querySelectorAll('[data-question-nav]'));
+            const prevBtn = document.getElementById('question-prev');
+            const nextBtn = document.getElementById('question-next');
+            const form = document.getElementById('exam-attempt-form');
+            let currentIndex = 0;
+
+            const setButtonState = (button, enabled) => {
+                if (!button) return;
+                button.disabled = !enabled;
+                button.classList.toggle('opacity-50', !enabled);
+                button.classList.toggle('cursor-not-allowed', !enabled);
+            };
+
+            const updateView = (index) => {
+                currentIndex = Math.max(0, Math.min(index, sections.length - 1));
+                sections.forEach((section, idx) => {
+                    section.classList.toggle('hidden', idx !== currentIndex);
+                });
+                navButtons.forEach((button) => {
+                    const idx = parseInt(button.dataset.questionNav, 10);
+                    const isActive = idx === currentIndex;
+                    button.classList.toggle('bg-yellow-500', isActive);
+                    button.classList.toggle('text-gray-900', isActive);
+                    button.classList.toggle('border-yellow-500', isActive);
+                    button.classList.toggle('bg-white', !isActive);
+                    button.classList.toggle('text-gray-600', !isActive);
+                });
+                if (currentLabel) {
+                    currentLabel.textContent = String(currentIndex + 1);
+                }
+                setButtonState(prevBtn, currentIndex > 0);
+                setButtonState(nextBtn, currentIndex < sections.length - 1);
+                if (form) {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            navButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const idx = parseInt(button.dataset.questionNav, 10);
+                    if (Number.isFinite(idx)) {
+                        updateView(idx);
+                    }
+                });
+            });
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => updateView(currentIndex - 1));
+            }
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => updateView(currentIndex + 1));
+            }
+
+            updateView(0);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('image-modal-img');
+            const closeBtn = document.getElementById('image-modal-close');
+
+            if (!modal || !modalImg) {
+                return;
+            }
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalImg.src = '';
+            };
+
+            document.addEventListener('click', function (event) {
+                const target = event.target.closest('.exam-image');
+                if (!target) {
+                    return;
+                }
+                const fullUrl = target.dataset.fullUrl || target.getAttribute('src');
+                if (!fullUrl) {
+                    return;
+                }
+                modalImg.src = fullUrl;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
 @endsection

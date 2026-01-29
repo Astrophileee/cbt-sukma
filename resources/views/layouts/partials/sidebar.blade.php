@@ -16,11 +16,12 @@
         </div>
     </div>
     <nav class="mt-3 px-2 space-y-1 text-sm text-gray-700">
-    <!-- Single link -->
-    <a href="{{ route('dashboard') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
-        <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
-        Dashboard
-    </a>
+        <!-- Single link -->
+        <a href="{{ route('dashboard') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
+            <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
+            Dashboard
+        </a>
+    @hasrole('admin')
     <a href="{{ route('users.index') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Manajemen User
@@ -29,6 +30,8 @@
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Manajemen Siswa
     </a>
+    @endhasrole
+    @hasrole('guru')
     <a href="{{ route('questions.index') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Bank Soal
@@ -37,6 +40,12 @@
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Kelola Ujian
     </a>
+    <a href="{{ route('exams.grade.index') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
+        <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
+        Penilaian Essay
+    </a>
+    @endhasrole
+    @hasrole('siswa')
     <a href="{{ route('exams.join.form') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Ikuti Ujian
@@ -45,9 +54,6 @@
         <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
         Nilai Saya
     </a>
-    <a href="{{ route('exams.grade.index') }}" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-50 transition">
-        <i class="fas fa-home w-5 h-5 pt-1 text-gray-400 group-hover:text-yellow-600"></i>
-        Penilaian Essay
-    </a>
+    @endhasrole
     </nav>
 </aside>
